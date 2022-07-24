@@ -1,0 +1,164 @@
+---
+title: "Butovens Médé"
+output: html_notebook
+---
+
+Initial set up:
+```{r}
+getwd()
+#setwd("~/Downloads/PSY_202B_01/PSY_202B_HW/Homework_3/")
+file.choose() # Select data file interactively
+LogData <- read.delim("LogisticData.txt", header = TRUE, sep = "\t")
+head(LogData) #looking at data
+tail(LogData) #looking at data
+min(LogData$exercise) # Evaluating range of continuous variable
+max(LogData$exercise) # Evaluating range of continuous variable
+table(LogData$gender) # Checking if we have balanced data 
+table(LogData$diabetes) # Checking if we have balanced data 
+```
+
+```{r}
+library(ggplot2)
+ggplot(LogData, aes(x=exercise, y=diabetes)) + geom_point() + 
+  stat_smooth(method="glm", method.args=list(family="binomial"), se=FALSE) #Checking plot to have idea of what the data looks like
+```
+
+1. (a) Logistic regression analysis
+```{r}
+logreg <- glm ( diabetes ~ gender + exercise, data = LogData, family = binomial)
+summary(logreg)
+```
+
+(b) 
+
+- In this logistic regression equation the intercept alpha = -1.6939 of this model is the estimated log-odds (or logit) of being diabetic for the reference group when all the predictor variables are to equal to zero. In other words it is the log-odds (i.e. logit) of being diabetic for males who do not exercise at all.    
+
+- The Gamma coefficent for gender (Gamma = 1.4797) tells us that for a one unit increase in gender (i.e. when we go from male to female) there is an estimated (positive) +1.4797 unit change (i.e. an increase) in the log odds (i.e. logit) of being diabetic, everything else held constant (or everything else at zero if zero is meaningful). Its p-value indicates that it is significant in determining the presence in diabetes. Thus the switch from male to female is associated with an increase in the probability of having diabetes.
+
+- The beta coefficient for exercise (Beta = 1.708030) tells us that for one unit increase in exercise there is an estimated (positive) +1.708030 unit change (i.e. an increase) in the log odds (i.e. logit) of being diabetic everything else held constant (or everything else at zero if zero is meaningful). Its p-value indicates that it is significant in determining the presence in diabetes. Thus the increase in exercise is associated with an increase in the probability of having diabetes.  
+
+
+(c) Odds ratio for gender computation
+```{r}
+prob.female <- 1/(1+exp(1.6939-1.4797)) # Computation of probability of having diabetes for females
+
+odds.female <- prob.female/(1-prob.female) # Computation of odds for females
+
+
+prob.male <- 1/(1+exp(1.6939)) # Computation of probability of having diabetes for males
+odds.male <- prob.male/(1-prob.male) # Computation of odds for males
+
+odds.ratio.f.m <- odds.female/odds.male # Odds ratio Female/Male  
+
+odds.ratio.f.m 
+
+round(odds.ratio.f.m,4)  == round(exp(1.4797),4) # Verification with formula  exp[(Beta)*Delta] (with delta, amount of change we are interested in =1) confirmed that the computation were correctly done.
+
+```
+
+(d) Regression model with only gender as predictor
+```{r}
+logreg.gender <- glm (diabetes ~ gender, data = LogData, family = binomial)
+summary(logreg.gender)
+```
+
+The regression model that has the better fit is the first one (i.e. the model which includes both gender and exercise as explanatory variables). There are at least two things we can look at to arrive at that conclusion. 
+
+- 1: The AIC of the second model (ie. logreg.gender) is much higher than the model with two explanatory variables. When comparing different models for the same data set, the lower the AIC the better. In addition because the AIC includes a penalty term for the number of parameters in the model (i.e. the more parameters in the model the more penalized it is), the fact that "logreg" still has lower AIC despite being penalized at a higher rate than the "logreg.gender" model confirms that it has a better fit than the "logreg.gender" model.
+
+- 2: Another possible way to determine which model has better fit is by looking at the difference between the Null deviance vs Residual deviance for each model respectively. The greater the deviance between Null and Residual the better fitting the model. Null deviance shows how well the response variable is predicted by a model that includes only the intercept (i.e. the grand mean), whereas the Residual deviance shows how well the response variable is predicted by a model that includes all the variables. Here we can see that the "logreg" model decreases the deviance by 205.96 points as opposed to 33.4 points for the "logreg.gender model". This again confirms that the "logreg" regression has a better fit.
+
+(e) Odds ratio computation for the logreg.gender model
+```{r}
+prob.female2 <- 1/(1 + exp(1.2502-1.1156)) # Computation of probability of having diabetes for females
+
+odds.female2 <- prob.female2/ (1 - prob.female2) # Computation of odds for females
+
+prob.males2 <- 1/(1 + exp(1.2502)) # Computation of probability of having diabetes for males
+
+odds.male2 <- prob.males2 / (1 - prob.males2) # Computation of odds for males
+
+odds.ratio.f.m.2 <- odds.female2 / odds.male2
+
+odds.ratio.f.m.2 
+
+round(odds.ratio.f.m.2,4)  == round(exp(1.1156),4) # Verification with formula  exp[(Beta)*Delta] (with delta, amount of change we are interested in =1) confirmed that the computation were correctly done.
+```
+Interpretation: The odds ratio (which represents the change in the odds for a one unit increase in the independent variable) of 3.051398 means that women are about 3 times more likely to have diabetes than men. Or stated differently, from males to females the odds of having diabetes increase by a factor of 3.0514 or by about 205.14%.  
+
+
+2. (a)
+
+The assumptions of linear regression are: 
+
+- Linearity in the population parameters
+
+- Constant error variance (Homoscedasticity)
+
+- Normality
+
+- Independence
+
+- Fixed X
+
+- No measurement errors in y and x
+
+- Colinearity 
+
+- Outliers
+ 
+   (b)
+ 
+- Linearity in the population parameters: This assumption means that the model parameters (Betas) need to be linearly related to Y (the outcome). In other words the association the explanatory variables and response variables are linear. Linear in the betas (or linear in the paramaters). The important thing is having an additive regression equation.  
+
+- Constant error variance (Homoscedasticity): This assumption means that the variance in the error term around the best fitted line for each "x" should be about the same as "x" increases. This is also called equal variance. Also it can be stated that the variability in the response variable is the same at all levels of the explanatory variables. (In a graph, if we plot the model's residuals it should look like they have the same spread i.e. the same amount of variabily no matter where at the x-axis we are looking)
+
+- Independence of observations: 1 - This assumption means that each observation are sampled independently from each other. They are not correlated with each other (Independent error terms:   2 - This asssumption also means that each obvervation's residual is independent from another observation's residual): Independent outcomes and errors. 
+
+- Normality (or normally distributed errors): Means that the spread or the variance for the error term of each "x" needs to be normaly distributed (for continuous outcomes). It needs to have a bell-shaped probabilty distribution for each "x". We assume that the residuals from our linear regression model (i.e. the deviation of each observation's predicted score on the reponse variable from the true score) are normally distributed. If we were to plot the residual in a histogram for each observation it would make a bell shope curve. (In a graph that translates to having most of the observations being in the neigboring of the best fitted line, and less observations as we move away from that line)
+
+- Colinearity (or no multicolinearity): Predictor variables should not be related (or highly related) to each other. They should not be highly corralated with each other (i.e. small Pearsons correlation value). Each predictor variable should have a very substantial amount of unique variability that can contribute to explain the variability in the response variable. Each explanatory variable has to possibility of being independently associated with the response variable after taking into account the variability of the other variables. This makes it easier to determine the contribution of each variable to explain the response variable after controlling for the other explanatory variables.
+
+- No outliers: No observations that have unusual or extreme values relative to the other observations. 
+
+- Fixed X: The predictors variable should be fixed and determined ahead of time. That is, we act as if they are controlled by the design of our study (or experiment) and are measured without error. This also assumes that the values
+of a fixed variable in one study are the same as the values of the fixed variable in another study. 
+
+- No measurement errors in y and x: predictors and outcomes are assumed to be measured without errors.
+
+
+ (c) Assumption Violations:
+ 
+- Linearity in the population parameters: This assumption would be violated if we fit a linear model to data which are nonlinearly or nonadditively related. 
+
+ - Independence of observations: Violation of this assumption happens when data is nested/ hierarchical or clustered, if sampling method is clustered or startified, if we have repeated measures data due to research design (e.g. longitudinal studies), or time series data. Data resulting from these study will violate assuption of independence. This is one of the most serious assumptions to be violated as it will have a negative impact on parameter estimation. It is also the most diffictult assumption to fix. Unlike the assumption of normality, linearity and homoscedasticity the assumption of independence cannot be fixed by transforming variables, modifying them in the analysis, or excluding abservations. This is because of the structure of the data itself is the result of the violation of this assumption. (Note to self: It is important to undestand the process of study design.) 
+ 
+ - Constant error variance (Homoscedasticity): The model's residuals are estimates of the deviation each observation's predicted score on the response variable from their observed score. The bigger the residual, the bigger the error in prediction. Thus if the spread gets wider as the value of the explanatory variable increases. This indicates that the regression model does not predict the response at higher values of the explanatory variable as well as it does at lower values of the explanatory variable. For example if we were to look at household expdenditure as a function of household income we might see that as income increases, so does the expenditure. In tems of the distribution of expenditure we will see that the spread (i.e. the variance increases as x is increasing) 
+ 
+- Normality (or normally distributed errors): This assumption would be violated if we have data for which the errors in the model does not follow a normal distribution pattern. This can be the case for a Bernoulli experiment for instance (e.g. flipping a coin multiple times), which has a dichotomous outcome; or an experiment trying to determine the probability of a definite number of accidents happening during a randomly selected week, which has an outcome that follows a poisson distribution. Outcomes with skewed or heavey tiled distribution as well violate the Normality assumption. 
+ 
+- Colinearity (or no multicolinearity): This assumption would be violated if there is a linear relationship between two (or more) variables in the data set, or if two variables highly correlated (i.e. high to very high Pearsons correlation value). We can detect colinearity using the square root of variance-inflationfactor (VIF) and look for  
+
+- No outliers: This assumption would be violated if we have in our data observations that have high leverage (i.e. few observations pulling the mean of the whole sample) and high influence (i.e. few observations that substantially impact the intercept and slope of the regression equation) 
+
+- Fixed X: The violation of this assumption would have to come from a change in the study design
+
+- No measurement errors in y and x: It is safe to say that this assumption is always violated.
+
+(d) Potential problems that can results from violating assumptions
+
+- Linearity: If this assumption is violated (i.e. the functional form is incorrect), then both the coefficients and the standard errors in the output will be unreliable. Therefore the model will be unusable and predictions driven by the model are likely to be seriously in error, especially when trying to extrapolate beyond the range of the sample data.
+
+- Constant error variance (Homoscedasticity): We cannot rely on the standard error of the output because heteroscedasticity usually results in confidence intervals that are too wide or too narrow. The coefficients remain unbiased (i.e. remain best estimate for the relationship), but the hypothesis testing on the coefficients cannot be accurately done. 
+
+- Independence of observations and error terms (no autocorrelation where each residual is affected by the one before it): Like Heteroskedasticity, we cannot rely on the standard error of the output. The coefficients remain unbiased but the hypothesis testing on these coefficients cannot be accurately done. Thus any types of inference or hypothesis testing on the coefficients become inappropriate
+
+- Normality (or normally distributed errors): If the normality is violated and n is small, then the standard errors in the output is affected. And a skewed error distibution (caused by a few large outiliers) can have a large effect on parameter estimate which relies on minimization of squared error. Nonetheless, if this is not a case of dichotomous, or count data then this can be considered a weak assumption, and is not necessarily a problem if we have a large number of observations (thanks to the central limit theorem). Therefore the true relationship will still come out with enough observations.
+
+- Colinearity (or no multicolinearity): A violation of this assumption leads to having the standard errors and coefficients of affected variable to be unreliable (i.e. to unstable estimates). This could translate to: 1- a variable that we would expect to be a highly associated with the response variable not to be significant. - a negative coefficient for a variable that by itself is positively associated with the response variable 3- a drastic change in the parameter estimates for the other explanatory variables when taking out an explanatory variable. In addition, if explanatory variables are highly correlated with each other, they have very little unique variability so having these additional predictors in the model is not going to help explain any more of the variability in the response outcome than we could with just one of the explanatory variable.
+
+- No outliers: Outliers can have a large influence on the estimated line of best fit (i.e. impact on coefficient estimation). The analysis will try to fit the outlier and as a result the estimated regression line will not fit the data as well as it should (increasing the prediction error for the majority of the observations). 
+
+- Fixed X: If we wanted to replicate the study, the results would be different. 
+
+- No measurement errors in y and x: A violation of this assumption of random measurement error in the dependent variable is just an increase in the “unexplained” (and unexplainable) part of the model and measurement error in an independent variable will tend to bias its estimated slope coefficient of the regression.
