@@ -5,8 +5,7 @@ output: html_notebook
 
 Initial set up:
 ```{r}
-getwd()
-#setwd("~/Downloads/PSY_202B_01/PSY_202B_HW/Homework_3/")
+getwd() #identify directory
 file.choose() # Select data file interactively
 LogData <- read.delim("LogisticData.txt", header = TRUE, sep = "\t")
 head(LogData) #looking at data
