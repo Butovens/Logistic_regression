@@ -1,5 +1,6 @@
 ---
-title: "Butovens Médé"
+title: "Logistic Regression"
+author: "Butovens Médé"
 output: html_notebook
 ---
 
